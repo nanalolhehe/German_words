@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>German Vocabulary Trainer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+            text-align: center;
+        }
+        .word-display {
+            font-size: 3em;
+            margin: 30px 0;
+            min-height: 120px;
+        }
+        .german {
+            color: #d6336c;
+            font-weight: bold;
+        }
+        .english {
+            color: #1c7ed6;
+            font-size: 0.7em;
+            margin-top: 10px;
+        }
+        input {
+            font-size: 1.5em;
+            padding: 10px;
+            width: 80%;
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .stats {
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+        .timer {
+            font-size: 1.5em;
+            margin: 20px 0;
+            color: #333;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <h1>German Vocabulary Trainer</h1>
+    <div class="timer" id="timer">24:00:00 remaining</div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
+    <div class="stats">
+        <div>Words completed: <span id="counter">0</span>/1000</div>
+        <div>Day: <span id="day">1</span>/10</div>
+    </div>
+    <div class="word-display">
+        <div class="german" id="german-word">Click Start to begin</div>
+        <div class="english" id="english-word"></div>
+    </div>
+    <input type="text" id="user-input" placeholder="Type the German word..." disabled>
+    <div id="feedback"></div>
+    <div>
+        <button id="start-btn">Start</button>
+        <button id="pause-btn" disabled>Pause</button>
+    </div>
+
+    <script>
+        // Sample vocabulary (in full version would have 1000 words)
+        const words = [
+            {german: "Haus", english: "house"},
+            {german: "Tisch", english: "table"},
+            {german: "Stuhl", english: "chair"},
+            {german: "Fenster", english: "window"},
+            {german: "Tür", english: "door"},
+            {german: "Buch", english: "book"},
+            {german: "Stift", english: "pen"},
+            {german: "Wasser", english: "water"},
+            {german: "Brot", english: "bread"},
+            {german: "Käse", english: "cheese"},
+            {german: "Lampe", english: "lamp"},
+{german: "Montag", english: "Monday"},
+{german: "Dienstag", english: "Tuesday"},
+{german: "Mittwoch", english: "Wednesday"},
+{german: "Donnerstag", english: "Thursday"},
+{german: "Freitag", english: "Friday"},
+{german: "Samstag", english: "Saturday"},
+{german: "Sonntag", english: "Sunday"},
+{german: "Januar", english: "January"},
+{german: "Februar", english: "February"},
+{german: "März", english: "March"},
+{german: "April", english: "April"},
+{german: "Mai", english: "May"},
+{german: "Juni", english: "June"},
+{german: "Juli", english: "July"},
+{german: "August", english: "August"},
+{german: "September", english: "September"},
+{german: "Oktober", english: "October"},
+{german: "November", english: "November"},
+{german: "Dezember", english: "December"},
+{german: "Frühling", english: "spring"},
+{german: "Sommer", english: "summer"},
+{german: "Herbst", english: "autumn"},
+{german: "Winter", english: "winter"},
+{german: "Vater", english: "father"},
+{german: "Mutter", english: "mother"},
+{german: "Sohn", english: "son"},
+{german: "Tochter", english: "daughter"},
+{german: "Bruder", english: "brother"},
+{german: "Schwester", english: "sister"},
+{german: "Großvater", english: "grandfather"},
+{german: "Großmutter", english: "grandmother"},
+{german: "Onkel", english: "uncle"},
+{german: "Tante", english: "aunt"},
+{german: "Teppich", english: "carpet"},
+{german: "Kissen", english: "pillow"},
+{german: "Decke", english: "blanket"},
+{german: "Schrank", english: "wardrobe"},
+{german: "Regal", english: "shelf"},
+{german: "Spiegel", english: "mirror"},
+{german: "Uhr", english: "clock"},
+{german: "Bild", english: "picture"},
+{german: "Vase", english: "vase"},
+{german: "Apfel", english: "apple"},
+{german: "Banane", english: "banana"},
+{german: "Orange", english: "orange"},
+{german: "Milch", english: "milk"},
+{german: "Kaffee", english: "coffee"},
+{german: "Tee", english: "tea"},
+{german: "Fleisch", english: "meat"},
+{german: "Fisch", english: "fish"},
+{german: "Ei", english: "egg"},
+{german: "Reis", english: "rice"},
+{german: "Katze", english: "cat"},
+{german: "Hund", english: "dog"},
+{german: "Vogel", english: "bird"},
+{german: "Pferd", english: "horse"},
+{german: "Kuh", english: "cow"},
+{german: "Schwein", english: "pig"},
+{german: "Hase", english: "rabbit"},
+{german: "Maus", english: "mouse"},
+{german: "Schlange", english: "snake"},
+{german: "Frosch", english: "frog"},
+{german: "Baum", english: "tree"},
+{german: "Blume", english: "flower"},
+{german: "Gras", english: "grass"},
+{german: "Berg", english: "mountain"},
+{german: "Fluss", english: "river"},
+{german: "See", english: "lake"},
+{german: "Meer", english: "sea"},
+{german: "Sonne", english: "sun"},
+{german: "Mond", english: "moon"},
+{german: "Stern", english: "star"},
+{german: "Kopf", english: "head"},
+{german: "Auge", english: "eye"},
+{german: "Nase", english: "nose"},
+{german: "Mund", english: "mouth"},
+{german: "Hand", english: "hand"},
+{german: "Fuß", english: "foot"},
+{german: "Arm", english: "arm"},
+{german: "Bein", english: "leg"},
+{german: "Rücken", english: "back"},
+{german: "Bauch", english: "stomach"},
+{german: "Hemd", english: "shirt"},
+{german: "Hose", english: "pants"},
+{german: "Rock", english: "skirt"},
+{german: "Kleid", english: "dress"},
+{german: "Schuh", english: "shoe"},
+{german: "Jacke", english: "jacket"},
+{german: "Mütze", english: "hat"},
+{german: "Schal", english: "scarf"},
+{german: "Handschuh", english: "glove"},
+{german: "Socke", english: "sock"},
+{german: "Auto", english: "car"},
+{german: "Bus", english: "bus"},
+{german: "Zug", english: "train"},
+{german: "Fahrrad", english: "bicycle"},
+{german: "Flugzeug", english: "airplane"},
+{german: "Schiff", english: "ship"},
+{german: "Motorrad", english: "motorcycle"},
+{german: "Taxi", english: "taxi"},
+{german: "U-Bahn", english: "subway"},
+{german: "Tram", english: "tram"},
+{german: "Arzt", english: "doctor"},
+{german: "Lehrer", english: "teacher"},
+{german: "Ingenieur", english: "engineer"},
+{german: "Koch", english: "cook"},
+{german: "Polizist", english: "police officer"},
+{german: "Feuerwehrmann", english: "firefighter"},
+{german: "Künstler", english: "artist"},
+{german: "Musiker", english: "musician"},
+{german: "Schreiner", english: "carpenter"},
+{german: "Friseur", english: "hairdresser"},
+{german: "gehen", english: "to go"},
+{german: "kommen", english: "to come"},
+{german: "sehen", english: "to see"},
+{german: "hören", english: "to hear"},
+{german: "sprechen", english: "to speak"},
+{german: "lesen", english: "to read"},
+{german: "schreiben", english: "to write"},
+{german: "lernen", english: "to learn"},
+{german: "arbeiten", english: "to work"},
+{german: "spielen", english: "to play"},
+{german: "groß", english: "big"},
+{german: "klein", english: "small"},
+{german: "schnell", english: "fast"},
+{german: "langsam", english: "slow"},
+{german: "alt", english: "old"},
+{german: "neu", english: "new"},
+{german: "gut", english: "good"},
+{german: "schlecht", english: "bad"},
+{german: "schön", english: "beautiful"},
+{german: "hässlich", english: "ugly"},
+{german: "Wissenschaft", english: "science"},
+{german: "Forschung", english: "research"},
+{german: "Entwicklung", english: "development"},
+{german: "Technologie", english: "technology"},
+{german: "Umwelt", english: "environment"},
+{german: "Politik", english: "politics"},
+{german: "Wirtschaft", english: "economy"},
+{german: "Gesellschaft", english: "society"},
+{german: "Kultur", english: "culture"},
+{german: "Bildung", english: "education"},
+{german: "Es regnet in Strömen", english: "It's raining cats and dogs"},
+{german: "Das ist nicht mein Bier", english: "That's not my cup of tea"},
+{german: "Die Katze im Sack kaufen", english: "To buy a pig in a poke"},
+{german: "Tomaten auf den Augen haben", english: "To not see what's obvious"},
+{german: "Da liegt der Hase im Pfeffer", english: "That's the crux of the matter"},
+{german: "Messer", english: "knife"},
+{german: "Gabel", english: "fork"},
+{german: "Löffel", english: "spoon"},
+{german: "Teller", english: "plate"},
+{german: "Glas", english: "glass"},
+{german: "Tasse", english: "cup"},
+{german: "Topf", english: "pot"},
+{german: "Pfanne", english: "pan"},
+{german: "Kühlschrank", english: "refrigerator"},
+{german: "Herd", english: "stove"},
+{german: "Papier", english: "paper"},
+{german: "Bleistift", english: "pencil"},
+{german: "Radiergummi", english: "eraser"},
+{german: "Lineal", english: "ruler"},
+{german: "Schere", english: "scissors"},
+{german: "Heftgerät", english: "stapler"},
+{german: "Locher", english: "hole punch"},
+{german: "Notizbuch", english: "notebook"},
+{german: "Ordner", english: "binder"},
+{german: "Briefumschlag", english: "envelope"},
+{german: "Regen", english: "rain"},
+{german: "Schnee", english: "snow"},
+{german: "Wind", english: "wind"},
+{german: "Nebel", english: "fog"},
+{german: "Gewitter", english: "thunderstorm"},
+{german: "Wolke", english: "cloud"},
+{german: "Sonnenschein", english: "sunshine"},
+{german: "Hitze", english: "heat"},
+{german: "Kälte", english: "cold"},
+{german: "Feuchtigkeit", english: "humidity"},
+{german: "rot", english: "red"},
+{german: "blau", english: "blue"},
+{german: "grün", english: "green"},
+{german: "gelb", english: "yellow"},
+{german: "schwarz", english: "black"},
+{german: "weiß", english: "white"},
+{german: "grau", english: "gray"},
+{german: "braun", english: "brown"},
+{german: "rosa", english: "pink"},
+{german: "lila", english: "purple"},
+{german: "eins", english: "one"},
+{german: "zwei", english: "two"},
+{german: "drei", english: "three"},
+{german: "vier", english: "four"},
+{german: "fünf", english: "five"},
+{german: "sechs", english: "six"},
+{german: "sieben", english: "seven"},
+{german: "acht", english: "eight"},
+{german: "neun", english: "nine"},
+{german: "zehn", english: "ten"},
+{german: "elf", english: "eleven"},
+{german: "zwölf", english: "twelve"},
+{german: "dreizehn", english: "thirteen"},
+{german: "vierzehn", english: "fourteen"},
+{german: "fünfzehn", english: "fifteen"},
+{german: "sechzehn", english: "sixteen"},
+{german: "siebzehn", english: "seventeen"},
+{german: "achtzehn", english: "eighteen"},
+{german: "neunzehn", english: "nineteen"},
+{german: "zwanzig", english: "twenty"},
+{german: "Uhrzeit", english: "time"},
+{german: "Stunde", english: "hour"},
+{german: "Minute", english: "minute"},
+{german: "Sekunde", english: "second"},
+{german: "Morgen", english: "morning"},
+{german: "Mittag", english: "noon"},
+{german: "Nachmittag", english: "afternoon"},
+{german: "Abend", english: "evening"},
+{german: "Nacht", english: "night"},
+{german: "Mitternacht", english: "midnight"},
+{german: "Restaurant", english: "restaurant"},
+{german: "Hotel", english: "hotel"},
+{german: "Bank", english: "bank"},
+{german: "Post", english: "post office"},
+{german: "Bibliothek", english: "library"},
+{german: "Museum", english: "museum"},
+{german: "Kino", english: "cinema"},
+{german: "Park", english: "park"},
+{german: "Markt", english: "market"},
+{german: "Apotheke", english: "pharmacy"},
+{german: "Krankenhaus", english: "hospital"},
+{german: "Arztpraxis", english: "doctor's office"},
+{german: "Schmerz", english: "pain"},
+{german: "Fieber", english: "fever"},
+{german: "Husten", english: "cough"},
+{german: "Erkältung", english: "cold"},
+{german: "Kopfschmerzen", english: "headache"},
+{german: "Tablette", english: "pill"},
+{german: "Verband", english: "bandage"},
+{german: "Operation", english: "surgery"},
+{german: "Mathematik", english: "mathematics"},
+{german: "Deutsch", english: "German"},
+{german: "Englisch", english: "English"},
+{german: "Geschichte", english: "history"},
+{german: "Geographie", english: "geography"},
+{german: "Biologie", english: "biology"},
+{german: "Chemie", english: "chemistry"},
+{german: "Physik", english: "physics"},
+{german: "Kunst", english: "art"},
+{german: "Musik", english: "music"},
+{german: "Fußball", english: "soccer"},
+{german: "Basketball", english: "basketball"},
+{german: "Tennis", english: "tennis"},
+{german: "Schwimmen", english: "swimming"},
+{german: "Laufen", english: "running"},
+{german: "Radfahren", english: "cycling"},
+{german: "Golf", english: "golf"},
+{german: "Volleyball", english: "volleyball"},
+{german: "Handball", english: "handball"},
+{german: "Boxen", english: "boxing"},
+{german: "Lesen", english: "reading"},
+{german: "Schreiben", english: "writing"},
+{german: "Malerei", english: "painting"},
+{german: "Fotografie", english: "photography"},
+{german: "Gärtnern", english: "gardening"},
+{german: "Kochen", english: "cooking"},
+{german: "Reisen", english: "traveling"},
+{german: "Angeln", english: "fishing"},
+{german: "Sammeln", english: "collecting"},
+{german: "Basteln", english: "crafting"},
+{german: "Computer", english: "computer"},
+{german: "Laptop", english: "laptop"},
+{german: "Smartphone", english: "smartphone"},
+{german: "Tablet", english: "tablet"},
+{german: "Internet", english: "internet"},
+{german: "Website", english: "website"},
+{german: "Software", english: "software"},
+{german: "Hardware", english: "hardware"},
+{german: "Daten", english: "data"},
+{german: "Programm", english: "program"},
+{german: "Firma", english: "company"},
+{german: "Geschäft", english: "business"},
+{german: "Meeting", english: "meeting"},
+{german: "Präsentation", english: "presentation"},
+{german: "Vertrag", english: "contract"},
+{german: "Kunde", english: "customer"},
+{german: "Produkt", english: "product"},
+{german: "Dienstleistung", english: "service"},
+{german: "Marketing", english: "marketing"},
+{german: "Verkauf", english: "sales"},
+{german: "Glück", english: "happiness"},
+{german: "Traurigkeit", english: "sadness"},
+{german: "Wut", english: "anger"},
+{german: "Angst", english: "fear"},
+{german: "Überraschung", english: "surprise"},
+{german: "Liebe", english: "love"},
+{german: "Hass", english: "hate"},
+{german: "Freude", english: "joy"},
+{german: "Enttäuschung", english: "disappointment"},
+{german: "Aufregung", english: "excitement"},
+{german: "Freiheit", english: "freedom"},
+{german: "Gerechtigkeit", english: "justice"},
+{german: "Wahrheit", english: "truth"},
+{german: "Schönheit", english: "beauty"},
+{german: "Kreativität", english: "creativity"},
+{german: "Intelligenz", english: "intelligence"},
+{german: "Geduld", english: "patience"},
+{german: "Mut", english: "courage"},
+{german: "Hoffnung", english: "hope"},
+{german: "Erfolg", english: "success"},
+{german: "Waschmaschine", english: "washing machine"},
+{german: "Trockner", english: "dryer"},
+{german: "Geschirrspüler", english: "dishwasher"},
+{german: "Mikrowelle", english: "microwave"},
+{german: "Toaster", english: "toaster"},
+{german: "Mixer", english: "blender"},
+{german: "Staubsauger", english: "vacuum cleaner"},
+{german: "Bügeleisen", english: "iron"},
+{german: "Haartrockner", english: "hair dryer"},
+{german: "Elektroherd", english: "electric stove"},
+{german: "Schaufel", english: "shovel"},
+{german: "Hacke", english: "hoe"},
+{german: "Gießkanne", english: "watering can"},
+{german: "Rasenmäher", english: "lawn mower"},
+{german: "Blumenerde", english: "potting soil"},
+{german: "Samen", english: "seeds"},
+{german: "Dünger", english: "fertilizer"},
+{german: "Unkraut", english: "weed"},
+{german: "Schubkarre", english: "wheelbarrow"},
+{german: "Gartenhandschuhe", english: "gardening gloves"},
+{german: "Zahnbürste", english: "toothbrush"},
+{german: "Zahnpasta", english: "toothpaste"},
+{german: "Seife", english: "soap"},
+{german: "Shampoo", english: "shampoo"},
+{german: "Duschgel", english: "shower gel"},
+{german: "Handtuch", english: "towel"},
+{german: "Waschbecken", english: "sink"},
+{german: "Toilette", english: "toilet"},
+{german: "Badematte", english: "bath mat"},
+{german: "Rasierer", english: "razor"},
+{german: "Hammer", english: "hammer"},
+{german: "Nagel", english: "nail"},
+{german: "Schraube", english: "screw"},
+{german: "Schraubenschlüssel", english: "wrench"},
+{german: "Zange", english: "pliers"},
+{german: "Säge", english: "saw"},
+{german: "Leiter", english: "ladder"},
+{german: "Zement", english: "cement"},
+{german: "Ziegelstein", english: "brick"},
+{german: "Farbe", english: "paint"},
+{german: "Klavier", english: "piano"},
+{german: "Gitarre", english: "guitar"},
+{german: "Geige", english: "violin"},
+{german: "Trompete", english: "trumpet"},
+{german: "Schlagzeug", english: "drums"},
+{german: "Flöte", english: "flute"},
+{german: "Note", english: "music note"},
+{german: "Rhythmus", english: "rhythm"},
+{german: "Melodie", english: "melody"},
+{german: "Orchester", english: "orchestra"},
+{german: "Pinsel", english: "paintbrush"},
+{german: "Leinwand", english: "canvas"},
+{german: "Palette", english: "palette"},
+{german: "Aquarellfarbe", english: "watercolor"},
+{german: "Ölfarbe", english: "oil paint"},
+{german: "Bleistift", english: "pencil"},
+{german: "Radiergummi", english: "eraser"},
+{german: "Skizzenblock", english: "sketchbook"},
+{german: "Ton", english: "clay"},
+{german: "Meißel", english: "chisel"},
+{german: "Windel", english: "diaper"},
+{german: "Schnuller", english: "pacifier"},
+{german: "Babyflasche", english: "baby bottle"},
+{german: "Kinderbett", english: "crib"},
+{german: "Stubenwagen", english: "bassinet"},
+{german: "Babybadewanne", english: "baby bathtub"},
+{german: "Lätzchen", english: "bib"},
+{german: "Kinderwagen", english: "stroller"},
+{german: "Babyphone", english: "baby monitor"},
+{german: "Rassel", english: "rattle"},
+{german: "Ring", english: "ring"},
+{german: "Halskette", english: "necklace"},
+{german: "Armband", english: "bracelet"},
+{german: "Ohrring", english: "earring"},
+{german: "Brosche", english: "brooch"},
+{german: "Anhänger", english: "pendant"},
+{german: "Kette", english: "chain"},
+{german: "Diamant", english: "diamond"},
+{german: "Gold", english: "gold"},
+{german: "Silber", english: "silver"},
+{german: "Schraubendreher", english: "screwdriver"},
+{german: "Bohrmaschine", english: "drill"},
+{german: "Meterstab", english: "tape measure"},
+{german: "Wasserwaage", english: "level"},
+{german: "Schleifpapier", english: "sandpaper"},
+{german: "Schweißgerät", english: "welding machine"},
+{german: "Rohrzange", english: "pipe wrench"},
+{german: "Stechbeitel", english: "chisel"},
+{german: "Feile", english: "file"},
+{german: "Schlagschrauber", english: "impact wrench"},
+{german: "Fernseher", english: "television"},
+{german: "Lautsprecher", english: "speaker"},
+{german: "Kopfhörer", english: "headphones"},
+{german: "Maus", english: "computer mouse"},
+{german: "Tastatur", english: "keyboard"},
+{german: "Drucker", english: "printer"},
+{german: "Scanner", english: "scanner"},
+{german: "Webcam", english: "webcam"},
+{german: "Router", english: "router"},
+{german: "Festplatte", english: "hard drive"},
+{german: "Zelt", english: "tent"},
+{german: "Schlafsack", english: "sleeping bag"},
+{german: "Rucksack", english: "backpack"},
+{german: "Wanderstock", english: "hiking pole"},
+{german: "Kompass", english: "compass"},
+{german: "Taschenlampe", english: "flashlight"},
+{german: "Campingkocher", english: "camping stove"},
+{german: "Wasserflasche", english: "water bottle"},
+{german: "Picknickdecke", english: "picnic blanket"},
+{german: "Fernglas", english: "binoculars"},
+{german: "Bürostuhl", english: "office chair"},
+{german: "Schreibtisch", english: "desk"},
+{german: "Aktenordner", english: "file folder"},
+{german: "Ablage", english: "file organizer"},
+{german: "Whiteboard", english: "whiteboard"},
+{german: "Flipchart", english: "flip chart"},
+{german: "Projektor", english: "projector"},
+{german: "Telefon", english: "telephone"},
+{german: "Faxgerät", english: "fax machine"},
+{german: "Rechner", english: "calculator"},
+{german: "Schneebesen", english: "whisk"},
+{german: "Kochlöffel", english: "wooden spoon"},
+{german: "Pfannenwender", english: "spatula"},
+{german: "Schäler", english: "peeler"},
+{german: "Messerblock", english: "knife block"},
+{german: "Schneidebrett", english: "cutting board"},
+{german: "Dosenöffner", english: "can opener"},
+{german: "Korkenzieher", english: "corkscrew"},
+{german: "Salatschleuder", english: "salad spinner"},
+{german: "Eieruhr", english: "kitchen timer"},
+{german: "Mineralwasser", english: "mineral water"},
+{german: "Saft", english: "juice"},
+{german: "Limonade", english: "lemonade"},
+{german: "Bier", english: "beer"},
+{german: "Wein", english: "wine"},
+{german: "Sekt", english: "sparkling wine"},
+{german: "Whisky", english: "whiskey"},
+{german: "Wodka", english: "vodka"},
+{german: "Rum", english: "rum"},
+{german: "Tee", english: "tea"},
+{german: "Brot", english: "bread"},
+{german: "Brötchen", english: "bread roll"},
+{german: "Kuchen", english: "cake"},
+{german: "Torte", english: "layer cake"},
+{german: "Plätzchen", english: "cookie"},
+{german: "Croissant", english: "croissant"},
+{german: "Baguette", english: "baguette"},
+{german: "Donut", english: "donut"},
+{german: "Muffin", english: "muffin"},
+{german: "Brezel", english: "pretzel"},
+{german: "Hähnchen", english: "chicken"},
+{german: "Rindfleisch", english: "beef"},
+{german: "Schweinefleisch", english: "pork"},
+{german: "Lamm", english: "lamb"},
+{german: "Wurst", english: "sausage"},
+{german: "Schinken", english: "ham"},
+{german: "Speck", english: "bacon"},
+{german: "Salami", english: "salami"},
+{german: "Pute", english: "turkey"},
+{german: "Ente", english: "duck"},
+{german: "Milch", english: "milk"},
+{german: "Käse", english: "cheese"},
+{german: "Butter", english: "butter"},
+{german: "Joghurt", english: "yogurt"},
+{german: "Sahne", english: "cream"},
+{german: "Quark", english: "quark"},
+{german: "Hüttenkäse", english: "cottage cheese"},
+{german: "Schlagsahne", english: "whipped cream"},
+{german: "Kondensmilch", english: "condensed milk"},
+{german: "Parmesan", english: "parmesan"},
+{german: "Kartoffel", english: "potato"},
+{german: "Karotte", english: "carrot"},
+{german: "Zwiebel", english: "onion"},
+{german: "Tomate", english: "tomato"},
+{german: "Gurke", english: "cucumber"},
+{german: "Paprika", english: "bell pepper"},
+{german: "Brokkoli", english: "broccoli"},
+{german: "Blumenkohl", english: "cauliflower"},
+{german: "Spinat", english: "spinach"},
+{german: "Pilz", english: "mushroom"},
+{german: "Apfel", english: "apple"},
+{german: "Banane", english: "banana"},
+{german: "Orange", english: "orange"},
+{german: "Erdbeere", english: "strawberry"},
+{german: "Traube", english: "grape"},
+{german: "Pfirsich", english: "peach"},
+{german: "Birne", english: "pear"},
+{german: "Kirsche", english: "cherry"},
+{german: "Ananas", english: "pineapple"},
+{german: "Melone", english: "melon"},
+{german: "Lachs", english: "salmon"},
+{german: "Thunfisch", english: "tuna"},
+{german: "Forelle", english: "trout"},
+{german: "Hering", english: "herring"},
+{german: "Garnele", english: "shrimp"},
+{german: "Muschel", english: "mussel"},
+{german: "Tintenfisch", english: "squid"},
+{german: "Austern", english: "oysters"},
+{german: "Krabbe", english: "crab"},
+{german: "Hummer", english: "lobster"},
+{german: "Reis", english: "rice"},
+{german: "Nudeln", english: "pasta"},
+{german: "Bulgur", english: "bulgur"},
+{german: "Quinoa", english: "quinoa"},
+{german: "Haferflocken", english: "oatmeal"},
+{german: "Müsli", english: "muesli"},
+{german: "Weizen", english: "wheat"},
+{german: "Roggen", english: "rye"},
+{german: "Gerste", english: "barley"},
+{german: "Dinkel", english: "spelt"},
+{german: "Salz", english: "salt"},
+{german: "Pfeffer", english: "pepper"},
+{german: "Zimt", english: "cinnamon"},
+{german: "Kümmel", english: "cumin"},
+{german: "Petersilie", english: "parsley"},
+{german: "Dill", english: "dill"},
+{german: "Basilikum", english: "basil"},
+{german: "Oregano", english: "oregano"},
+{german: "Thymian", english: "thyme"},
+{german: "Rosmarin", english: "rosemary"},
+{german: "Senf", english: "mustard"},
+{german: "Ketchup", english: "ketchup"},
+{german: "Mayonnaise", english: "mayonnaise"},
+{german: "Essig", english: "vinegar"},
+{german: "Öl", english: "oil"},
+{german: "Sojasauce", english: "soy sauce"},
+{german: "Worcestersauce", english: "Worcestershire sauce"},
+{german: "Barbecuesauce", english: "barbecue sauce"},
+{german: "Pestosauce", english: "pesto sauce"},
+{german: "Tomatensauce", english: "tomato sauce"},
+{german: "Toilettenpapier", english: "toilet paper"},
+{german: "Papierhandtücher", english: "paper towels"},
+{german: "Müllbeutel", english: "trash bags"},
+{german: "Lufterfrischer", english: "air freshener"},
+{german: "Schwamm", english: "sponge"},
+{german: "Putztuch", english: "cleaning cloth"},
+{german: "Scheuermilch", english: "scouring milk"},
+{german: "Badreiniger", english: "bathroom cleaner"},
+{german: "Kalkentferner", english: "limescale remover"},
+{german: "Duschvorhang", english: "shower curtain"},
+{german: "Waschmittel", english: "laundry detergent"},
+{german: "Weichspüler", english: "fabric softener"},
+{german: "Spülmittel", english: "dish soap"},
+{german: "Allzweckreiniger", english: "all-purpose cleaner"},
+{german: "Fensterreiniger", english: "window cleaner"},
+{german: "Bodenreiniger", english: "floor cleaner"},
+{german: "Desinfektionsmittel", english: "disinfectant"},
+{german: "Möbelpolitur", english: "furniture polish"},
+{german: "Teppichreiniger", english: "carpet cleaner"},
+{german: "Ofenreiniger", english: "oven cleaner"},
+{german: "Bleistift", english: "pencil"},
+{german: "Kugelschreiber", english: "ballpoint pen"},
+{german: "Füller", english: "fountain pen"},
+{german: "Textmarker", english: "highlighter"},
+{german: "Radiergummi", english: "eraser"},
+{german: "Korrekturflüssigkeit", english: "correction fluid"},
+{german: "Lineal", english: "ruler"},
+{german: "Geodreieck", english: "set square"},
+{german: "Zirkel", english: "compass"},
+{german: "Tintenpatrone", english: "ink cartridge"},
+{german: "Schulheft", english: "notebook"},
+{german: "Ringbuch", english: "binder"},
+{german: "Mappe", english: "folder"},
+{german: "Schulranzen", english: "school bag"},
+{german: "Federmäppchen", english: "pencil case"},
+{german: "Taschenrechner", english: "calculator"},
+{german: "Wörterbuch", english: "dictionary"},
+{german: "Atlas", english: "atlas"},
+{german: "Schnellhefter", english: "file folder"},
+{german: "Klarsichthülle", english: "plastic sleeve"},
+{german: "Büroklammer", english: "paper clip"},
+{german: "Heftklammer", english: "staple"},
+{german: "Locher", english: "hole punch"},
+{german: "Tacker", english: "stapler"},
+{german: "Brieföffner", english: "letter opener"},
+{german: "Klebeband", english: "adhesive tape"},
+{german: "Klebestift", english: "glue stick"},
+{german: "Notizblock", english: "notepad"},
+{german: "Post-it", english: "sticky note"},
+{german: "Visitenkarte", english: "business card"},
+{german: "Briefpapier", english: "writing paper"},
+{german: "Kuvert", english: "envelope"},
+{german: "Briefmarke", english: "stamp"},
+{german: "Postkarte", english: "postcard"},
+{german: "Geschenkpapier", english: "wrapping paper"},
+{german: "Karteikarte", english: "index card"},
+{german: "Etikett", english: "label"},
+{german: "Aufkleber", english: "sticker"},
+{german: "Schablone", english: "stencil"},
+{german: "Siegel", english: "seal"},
+{german: "Aquarellfarbe", english: "watercolor"},
+{german: "Ölfarbe", english: "oil paint"},
+{german: "Acrylfarbe", english: "acrylic paint"},
+{german: "Pastellkreide", english: "pastel"},
+{german: "Kohle", english: "charcoal"},
+{german: "Zeichenkohle", english: "drawing charcoal"},
+{german: "Tusche", english: "ink"},
+{german: "Feder", english: "quill"},
+{german: "Staffelei", english: "easel"},
+{german: "Skizzenblock", english: "sketchbook"},
+{german: "Wolle", english: "wool"},
+{german: "Stoff", english: "fabric"},
+{german: "Nadel", english: "needle"},
+{german: "Faden", english: "thread"},
+{german: "Knopf", english: "button"},
+{german: "Reißverschluss", english: "zipper"},
+{german: "Schnur", english: "string"},
+{german: "Garn", english: "yarn"},
+{german: "Perle", english: "bead"},
+{german: "Pappe", english: "cardboard"},
+{german: "Nähmaschine", english: "sewing machine"},
+{german: "Schere", english: "scissors"},
+{german: "Nadelkissen", english: "pincushion"},
+{german: "Stecknadel", english: "pin"},
+{german: "Nähgarn", english: "sewing thread"},
+{german: "Stoffschere", english: "fabric scissors"},
+{german: "Maßband", english: "measuring tape"},
+{german: "Stoffmarkierer", english: "fabric marker"},
+{german: "Bügeleisen", english: "iron"},
+{german: "Bügelbrett", english: "ironing board"},
+{german: "Holz", english: "wood"},
+{german: "Metall", english: "metal"},
+{german: "Plastik", english: "plastic"},
+{german: "Glas", english: "glass"},
+{german: "Keramik", english: "ceramic"},
+{german: "Stein", english: "stone"},
+{german: "Sand", english: "sand"},
+{german: "Zement", english: "cement"},
+{german: "Gips", english: "plaster"},
+{german: "Klebstoff", english: "adhesive"},
+{german: "Schraube", english: "screw"},
+{german: "Mutter", english: "nut"},
+{german: "Unterlegscheibe", english: "washer"},
+{german: "Dübel", english: "wall plug"},
+{german: "Haken", english: "hook"},
+{german: "Kette", english: "chain"},
+{german: "Scharnier", english: "hinge"},
+{german: "Griff", english: "handle"},
+{german: "Türklinke", english: "door handle"},
+{german: "Schloss", english: "lock"},
+{german: "Kabel", english: "cable"},
+{german: "Stecker", english: "plug"},
+{german: "Steckdose", english: "socket"},
+{german: "Birne", english: "light bulb"},
+{german: "Schalter", english: "switch"},
+{german: "Sicherung", english: "fuse"},
+{german: "Leitung", english: "wire"},
+{german: "Batterie", english: "battery"},
+{german: "Transformator", english: "transformer"},
+{german: "Kondensator", english: "capacitor"},
+{german: "Rohr", english: "pipe"},
+{german: "Armatur", english: "faucet"},
+{german: "Dichtung", english: "gasket"},
+{german: "Ventil", english: "valve"},
+{german: "Pumpe", english: "pump"},
+{german: "Boiler", english: "water heater"},
+{german: "Abfluss", english: "drain"},
+{german: "Siphon", english: "trap"},
+{german: "Duschkopf", english: "shower head"},
+{german: "Wasserhahn", english: "water tap"},
+{german: "Reifen", english: "tire"},
+{german: "Felge", english: "rim"},
+{german: "Motor", english: "engine"},
+{german: "Batterie", english: "battery"},
+{german: "Scheinwerfer", english: "headlight"},
+{german: "Blinker", english: "turn signal"},
+{german: "Bremsbelag", english: "brake pad"},
+{german: "Ölfilter", english: "oil filter"},
+{german: "Luftfilter", english: "air filter"},
+{german: "Kühler", english: "radiator"},
+{german: "Pedal", english: "pedal"},
+{german: "Kette", english: "chain"},
+{german: "Schaltung", english: "gears"},
+{german: "Bremshebel", english: "brake lever"},
+{german: "Sattel", english: "saddle"},
+{german: "Lenker", english: "handlebar"},
+{german: "Speiche", english: "spoke"},
+{german: "Dynamo", english: "dynamo"},
+{german: "Klingel", english: "bell"},
+{german: "Fahrradständer", english: "bike stand"},
+{german: "Prozessor", english: "processor"},
+{german: "Grafikkarte", english: "graphics card"},
+{german: "Arbeitsspeicher", english: "RAM"},
+{german: "Festplatte", english: "hard drive"},
+{german: "SSD", english: "SSD"},
+{german: "Netzteil", english: "power supply"},
+{german: "Mainboard", english: "motherboard"},
+{german: "Lüfter", english: "fan"},
+{german: "Gehäuse", english: "case"},
+{german: "Monitor", english: "monitor"},
+{german: "Maus", english: "mouse"},
+{german: "Tastatur", english: "keyboard"},
+{german: "Drucker", english: "printer"},
+{german: "Scanner", english: "scanner"},
+{german: "Lautsprecher", english: "speakers"},
+{german: "Webcam", english: "webcam"},
+{german: "Mikrofon", english: "microphone"},
+{german: "Kopfhörer", english: "headphones"},
+{german: "USB-Stick", english: "USB drive"},
+{german: "Externe Festplatte", english: "external hard drive"},
+{german: "Router", english: "router"},
+{german: "Modem", english: "modem"},
+{german: "Switch", english: "switch"},
+{german: "Repeater", english: "repeater"},
+{german: "Access Point", english: "access point"},
+{german: "Netzwerkkabel", english: "network cable"},
+{german: "LAN-Kabel", english: "LAN cable"},
+{german: "WLAN-Adapter", english: "Wi-Fi adapter"},
+{german: "Firewall", english: "firewall"},
+{german: "NAS", english: "NAS"},
+{german: "Betriebssystem", english: "operating system"},
+{german: "Anwendung", english: "application"},
+{german: "Programm", english: "program"},
+{german: "Datenbank", english: "database"},
+{german: "Algorithmus", english: "algorithm"},
+{german: "Benutzeroberfläche", english: "user interface"},
+{german: "Programmiersprache", english: "programming language"},
+{german: "Compiler", english: "compiler"},
+{german: "Debugger", english: "debugger"},
+{german: "Virtualisierung", english: "virtualization"},
+{german: "Webseite", english: "website"},
+{german: "Browser", english: "browser"},
+{german: "Suchmaschine", english: "search engine"},
+{german: "E-Mail", english: "email"},
+{german: "Download", english: "download"},
+{german: "Upload", english: "upload"},
+{german: "Streaming", english: "streaming"},
+{german: "Cloud", english: "cloud"},
+{german: "Social Media", english: "social media"},
+{german: "Blog", english: "blog"},
+{german: "Passwort", english: "password"},
+{german: "Verschlüsselung", english: "encryption"},
+{german: "Firewall", english: "firewall"},
+{german: "Antivirus", english: "antivirus"},
+{german: "Malware", english: "malware"},
+{german: "Virus", english: "virus"},
+{german: "Phishing", english: "phishing"},
+{german: "Zwei-Faktor-Authentifizierung", english: "two-factor authentication"},
+{german: "Backup", english: "backup"},
+{german: "Sicherungskopie", english: "backup copy"},
+{german: "Unternehmen", english: "company"},
+{german: "Firma", english: "firm"},
+{german: "Geschäft", english: "business"},
+{german: "Markt", english: "market"},
+{german: "Wirtschaft", english: "economy"},
+{german: "Handel", english: "trade"},
+{german: "Investition", english: "investment"},
+{german: "Gewinn", english: "profit"},
+{german: "Verlust", english: "loss"},
+{german: "Umsatz", english: "revenue"},
+{german: "Geld", english: "money"},
+{german: "Bank", english: "bank"},
+{german: "Konto", english: "account"},
+{german: "Kredit", english: "credit"},
+{german: "Darlehen", english: "loan"},
+{german: "Hypothek", english: "mortgage"},
+{german: "Zinsen", english: "interest"},
+{german: "Aktie", english: "stock"},
+{german: "Anleihe", english: "bond"},
+{german: "Dividende", english: "dividend"},
+{german: "Buchhaltung", english: "accounting"},
+{german: "Bilanz", english: "balance sheet"},
+{german: "Gewinn- und Verlustrechnung", english: "profit and loss statement"},
+{german: "Kassenbuch", english: "cash book"},
+{german: "Rechnung", english: "invoice"},
+{german: "Quittung", english: "receipt"},
+{german: "Beleg", english: "voucher"},
+{german: "Steuer", english: "tax"},
+{german: "Mehrwertsteuer", english: "VAT"},
+{german: "Abschreibung", english: "depreciation"},
+{german: "Vertrag", english: "contract"},
+{german: "Gesetz", english: "law"},
+{german: "Recht", english: "right"},
+{german: "Pflicht", english: "duty"},
+{german: "Gericht", english: "court"},
+{german: "Richter", english: "judge"},
+{german: "Anwalt", english: "lawyer"},
+{german: "Klage", english: "lawsuit"},
+{german: "Urteil", english: "verdict"},
+{german: "Strafe", english: "penalty"},
+{german: "Krankenhaus", english: "hospital"},
+{german: "Arzt", english: "doctor"},
+{german: "Krankenschwester", english: "nurse"},
+{german: "Patient", english: "patient"},
+{german: "Krankheit", english: "disease"},
+{german: "Symptom", english: "symptom"},
+{german: "Diagnose", english: "diagnosis"},
+{german: "Behandlung", english: "treatment"},
+{german: "Medikament", english: "medication"},
+{german: "Operation", english: "surgery"},
+{german: "Herz", english: "heart"},
+{german: "Lunge", english: "lung"},
+{german: "Gehirn", english: "brain"},
+{german: "Magen", english: "stomach"},
+{german: "Leber", english: "liver"},
+{german: "Niere", english: "kidney"},
+{german: "Darm", english: "intestine"},
+{german: "Muskel", english: "muscle"},
+{german: "Knochen", english: "bone"},
+{german: "Haut", english: "skin"},
+{german: "Bluttest", english: "blood test"},
+{german: "Röntgen", english: "X-ray"},
+{german: "Ultraschall", english: "ultrasound"},
+{german: "MRT", english: "MRI"},
+{german: "CT", english: "CT scan"},
+{german: "EKG", english: "ECG"},
+{german: "Impfung", english: "vaccination"},
+{german: "Transplantation", english: "transplant"},
+{german: "Chemotherapie", english: "chemotherapy"},
+{german: "Physiotherapie", english: "physiotherapy"},
+{german: "Antibiotikum", english: "antibiotic"},
+{german: "Schmerzmittel", english: "painkiller"},
+{german: "Antidepressivum", english: "antidepressant"},
+{german: "Blutdruckmittel", english: "blood pressure medication"},
+{german: "Insulin", english: "insulin"},
+{german: "Vitamine", english: "vitamins"},
+{german: "Tablette", english: "pill"},
+{german: "Kapsel", english: "capsule"},
+{german: "Sirup", english: "syrup"},
+{german: "Salbe", english: "ointment"},
+{german: "Depression", english: "depression"},
+{german: "Angststörung", english: "anxiety disorder"},
+{german: "Stress", english: "stress"},
+{german: "Burnout", english: "burnout"},
+{german: "Therapie", english: "therapy"},
+{german: "Psychologe", english: "psychologist"},
+{german: "Psychiater", english: "psychiatrist"},
+{german: "Beratung", english: "counseling"},
+{german: "Meditation", english: "meditation"},
+{german: "Achtsamkeit", english: "mindfulness"},
+{german: "Notfall", english: "emergency"},
+{german: "Unfall", english: "accident"},
+{german: "Verletzung", english: "injury"},
+{german: "Blutung", english: "bleeding"},
+{german: "Bruch", english: "fracture"},
+{german: "Verbrennung", english: "burn"},
+{german: "Vergiftung", english: "poisoning"},
+{german: "Herzinfarkt", english: "heart attack"},
+{german: "Schlaganfall", english: "stroke"},
+{german: "Wiederbelebung", english: "resuscitation"},
+{german: "Erste Hilfe", english: "first aid"},
+{german: "Verband", english: "bandage"},
+{german: "Pflaster", english: "band-aid"},
+{german: "Schiene", english: "splint"},
+{german: "Krücke", english: "crutch"},
+{german: "Tragetuch", english: "sling"},
+{german: "Desinfektionsmittel", english: "disinfectant"},
+{german: "Kühlpack", english: "ice pack"},
+{german: "Rettungsdecke", english: "emergency blanket"},
+{german: "Notruf", english: "emergency call"},
+{german: "Zahnarzt", english: "dentist"},
+{german: "Zahn", english: "tooth"},
+{german: "Zahnfleisch", english: "gum"},
+{german: "Karies", english: "cavity"},
+{german: "Füllung", english: "filling"},
+{german: "Krone", english: "crown"},
+{german: "Brücke", english: "bridge"},
+{german: "Implantat", english: "implant"},
+{german: "Zahnspange", english: "braces"},
+{german: "Zahnseide", english: "dental floss"},
+{german: "Augenarzt", english: "ophthalmologist"},
+{german: "Optiker", english: "optometrist"},
+{german: "Brille", english: "glasses"},
+{german: "Kontaktlinse", english: "contact lens"},
+{german: "Kurzsichtigkeit", english: "nearsightedness"},
+{german: "Weitsichtigkeit", english: "farsightedness"},
+{german: "Astigmatismus", english: "astigmatism"},
+{german: "Katarakt", english: "cataract"},
+{german: "Glaukom", english: "glaucoma"},
+{german: "Sehtest", english: "eye test"},
+{german: "HNO-Arzt", english: "ENT doctor"},
+{german: "Audiologe", english: "audiologist"},
+{german: "Hörgerät", english: "hearing aid"},
+{german: "Tinnitus", english: "tinnitus"},
+{german: "Schwerhörigkeit", english: "hearing loss"},
+{german: "Taubheit", english: "deafness"},
+{german: "Ohrenschmalz", english: "earwax"},
+{german: "Ohrenentzündung", english: "ear infection"},
+{german: "Hörtest", english: "hearing test"},
+{german: "Cochlea-Implantat", english: "cochlear implant"},
+{german: "Ernährung", english: "nutrition"},
+{german: "Diät", english: "diet"},
+{german: "Kalorie", english: "calorie"},
+{german: "Protein", english: "protein"},
+{german: "Kohlenhydrate", english: "carbohydrates"},
+{german: "Fett", english: "fat"},
+{german: "Vitamin", english: "vitamin"},
+{german: "Mineralstoff", english: "mineral"},
+{german: "Ballaststoffe", english: "fiber"},
+{german: "Nährwert", english: "nutritional value"},
+{german: "Training", english: "workout"},
+{german: "Übung", english: "exercise"},
+{german: "Krafttraining", english: "strength training"},
+{german: "Ausdauertraining", english: "endurance training"},
+{german: "Flexibilität", english: "flexibility"},
+{german: "Muskelaufbau", english: "muscle building"},
+{german: "Fettverbrennung", english: "fat burning"},
+{german: "Kreislauf", english: "circulation"},
+{german: "Puls", english: "pulse"},
+{german: "Atmung", english: "breathing"},
+{german: "Yogamatte", english: "yoga mat"},
+{german: "Asana", english: "asana"},
+{german: "Meditation", english: "meditation"},
+{german: "Atemübung", english: "breathing exercise"},
+{german: "Entspannung", english: "relaxation"},
+{german: "Balance", english: "balance"},
+{german: "Dehnung", english: "stretch"},
+{german: "Haltung", english: "posture"},
+{german: "Chakra", english: "chakra"},
+{german: "Namaste", english: "namaste"},
+{german: "Karate", english: "karate"},
+{german: "Judo", english: "judo"},
+{german: "Taekwondo", english: "taekwondo"},
+{german: "Kung Fu", english: "kung fu"},
+{german: "Aikido", english: "aikido"},
+{german: "Kampfsport", english: "martial arts"},
+{german: "Gürtel", english: "belt"},
+{german: "Dojo", english: "dojo"},
+{german: "Kata", english: "kata"},
+{german: "Sparring", english: "sparring"},
+{german: "Skifahren", english: "skiing"},
+{german: "Snowboarden", english: "snowboarding"},
+{german: "Schlittschuhlaufen", english: "ice skating"},
+{german: "Rodeln", english: "sledding"},
+{german: "Langlauf", english: "cross-country skiing"},
+{german: "Eishockey", english: "ice hockey"},
+{german: "Curling", english: "curling"},
+{german: "Biathlon", english: "biathlon"},
+{german: "Schneeschuhwandern", english: "snowshoeing"},
+{german: "Eisklettern", english: "ice climbing"},
+{german: "Schwimmen", english: "swimming"},
+{german: "Tauchen", english: "diving"},
+{german: "Surfen", english: "surfing"},
+{german: "Segeln", english: "sailing"},
+{german: "Kajakfahren", english: "kayaking"},
+{german: "Rudern", english: "rowing"},
+{german: "Wasserski", english: "waterskiing"},
+{german: "Wakeboarden", english: "wakeboarding"},
+{german: "Paddeln", english: "paddling"},
+{german: "Schnorcheln", english: "snorkeling"},
+{german: "Fußball", english: "soccer"},
+{german: "Basketball", english: "basketball"},
+{german: "Volleyball", english: "volleyball"},
+{german: "Handball", english: "handball"},
+{german: "Baseball", english: "baseball"},
+{german: "Cricket", english: "cricket"},
+{german: "Rugby", english: "rugby"},
+{german: "Hockey", english: "hockey"},
+{german: "Softball", english: "softball"},
+{german: "Ultimate Frisbee", english: "ultimate frisbee"},
+        ];
+
+        // App state
+        let currentIndex = 0;
+        let completed = 0;
+        let day = 1;
+        let isActive = false;
+        let isPaused = false;
+        let startTime;
+        let timerInterval;
+        let pausedTime = 0;
+        let pauseStart;
+
+        // DOM elements
+        const germanWord = document.getElementById('german-word');
+        const englishWord = document.getElementById('english-word');
+        const userInput = document.getElementById('user-input');
+        const feedback = document.getElementById('feedback');
+        const counter = document.getElementById('counter');
+        const dayDisplay = document.getElementById('day');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const timerDisplay = document.getElementById('timer');
+        const progressBar = document.getElementById('progress');
+
+        // Event listeners
+        startBtn.addEventListener('click', startTraining);
+        pauseBtn.addEventListener('click', togglePause);
+        userInput.addEventListener('keydown', checkAnswer);
+
+        function startTraining() {
+            isActive = true;
+            currentIndex = 0;
+            completed = 0;
+            startTime = new Date().getTime();
+            pausedTime = 0;
+            updateCounter();
+            showNextWord();
+            userInput.disabled = false;
+            userInput.focus();
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            // Start timer
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+            userInput.disabled = isPaused;
+            
+            if (isPaused) {
+                pauseStart = new Date().getTime();
+                clearInterval(timerInterval);
+            } else {
+                pausedTime += new Date().getTime() - pauseStart;
+                updateTimer();
+                timerInterval = setInterval(updateTimer, 1000);
+                userInput.focus();
+            }
+        }
+
+        function showNextWord() {
+            if (currentIndex < words.length) {
+                germanWord.textContent = words[currentIndex].german;
+                englishWord.textContent = words[currentIndex].english;
+                userInput.value = '';
+                feedback.textContent = '';
+            } else {
+                germanWord.textContent = "Session complete!";
+                englishWord.textContent = "";
+                userInput.disabled = true;
+                isActive = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                clearInterval(timerInterval);
+            }
+        }
+
+        function checkAnswer(e) {
+            if (e.key === 'Enter' && isActive && !isPaused) {
+                const answer = userInput.value.trim();
+                if (answer.toLowerCase() === words[currentIndex].german.toLowerCase()) {
+                    feedback.textContent = "Correct!";
+                    feedback.className = "correct";
+                    currentIndex++;
+                    completed++;
+                    updateCounter();
+                    updateProgress();
+                    setTimeout(showNextWord, 800);
+                } else {
+                    feedback.textContent = "Incorrect, try again";
+                    feedback.className = "incorrect";
+                    userInput.focus();
+                }
+            }
+        }
+
+        function updateCounter() {
+            counter.textContent = completed;
+        }
+
+        function updateProgress() {
+            const progress = (completed / 1000) * 100;
+            progressBar.style.width = progress + "%";
+        }
+
+        function updateTimer() {
+            if (!isActive || isPaused) return;
+            
+            const now = new Date().getTime();
+            const elapsed = now - startTime - pausedTime;
+            const remaining = 24 * 60 * 60 * 1000 - elapsed;
+            
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = "Time's up!";
+                germanWord.textContent = "Time's up for today!";
+                englishWord.textContent = "";
+                userInput.disabled = true;
+                isActive = false;
+                return;
+            }
+            
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+            
+            timerDisplay.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} remaining`;
+            
+            // Check if falling behind
+            const expectedWords = Math.floor(elapsed / (24 * 60 * 60 * 1000) * 1000);
+            if (completed < expectedWords * 0.8) {
+                timerDisplay.style.color = "red";
+            } else {
+                timerDisplay.style.color = "#333";
+            }
+        }
+    </script>
+</body>
+</html>
