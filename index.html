@@ -51,9 +51,13 @@
             margin: 20px 0;
             font-size: 1.2em;
         }
-        .timer {
-            font-size: 1.5em;
+        .timer-container {
+            display: flex;
+            justify-content: space-around;
             margin: 20px 0;
+        }
+        .timer {
+            font-size: 1.2em;
             color: #333;
         }
         .correct {
@@ -74,31 +78,60 @@
             border-radius: 5px;
             width: 0%;
         }
+        .user-section {
+            margin: 20px 0;
+        }
+        .user-section input {
+            font-size: 1em;
+            width: 200px;
+            padding: 8px;
+            margin: 0 10px;
+        }
+        .user-section button {
+            padding: 8px 15px;
+            font-size: 1em;
+            margin: 0 5px;
+        }
+        .login-message {
+            margin: 10px 0;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <h1>German Vocabulary Trainer</h1>
-    <div class="timer" id="timer">24:00:00 remaining</div>
+    <div class="user-section">
+        <input type="text" id="username" placeholder="Enter your name">
+        <button id="login-btn">Login</button>
+        <button id="logout-btn" style="display:none;">Logout</button>
+        <div id="login-message" class="login-message"></div>
+    </div>
+    <div class="timer-container">
+        <div class="timer">Today's time left: <span id="daily-timer">24:00:00</span></div>
+        <div class="timer">Total time: <span id="total-timer">00:00:00</span></div>
+    </div>
     <div class="progress-container">
         <div class="progress-bar" id="progress"></div>
     </div>
     <div class="stats">
-        <div>Words completed: <span id="counter">0</span>/1000</div>
-        <div>Day: <span id="day">1</span>/10</div>
+        <div>Words completed: <span id="counter">0</span>/<span id="total-words">0</span></div>
+        <div>Current word: <span id="current-position">0</span></div>
+        <div>Day: <span id="day">1</span></div>
     </div>
     <div class="word-display">
-        <div class="german" id="german-word">Click Start to begin</div>
+        <div class="german" id="german-word">Please login to begin</div>
         <div class="english" id="english-word"></div>
     </div>
     <input type="text" id="user-input" placeholder="Type the German word..." disabled>
     <div id="feedback"></div>
     <div>
-        <button id="start-btn">Start</button>
+        <button id="start-btn" disabled>Start</button>
         <button id="pause-btn" disabled>Pause</button>
+        <button id="reset-btn" disabled>Reset Progress</button>
     </div>
 
     <script>
-        // Sample vocabulary (in full version would have 1000 words)
+        // Sample vocabulary
         const words = [
             {german: "Haus", english: "house"},
             {german: "Tisch", english: "table"},
@@ -1076,10 +1109,14 @@
         let day = 1;
         let isActive = false;
         let isPaused = false;
-        let startTime;
-        let timerInterval;
-        let pausedTime = 0;
-        let pauseStart;
+        let startTime = 0;
+        let dailyStartTime = 0;
+        let timerInterval = null;
+        let totalElapsed = 0;
+        let dailyElapsed = 0;
+        let pauseStart = 0;
+        let username = '';
+        let userProgress = {};
 
         // DOM elements
         const germanWord = document.getElementById('german-word');
@@ -1087,33 +1124,172 @@
         const userInput = document.getElementById('user-input');
         const feedback = document.getElementById('feedback');
         const counter = document.getElementById('counter');
+        const currentPosition = document.getElementById('current-position');
+        const totalWords = document.getElementById('total-words');
         const dayDisplay = document.getElementById('day');
         const startBtn = document.getElementById('start-btn');
         const pauseBtn = document.getElementById('pause-btn');
-        const timerDisplay = document.getElementById('timer');
+        const resetBtn = document.getElementById('reset-btn');
+        const dailyTimer = document.getElementById('daily-timer');
+        const totalTimer = document.getElementById('total-timer');
         const progressBar = document.getElementById('progress');
+        const usernameInput = document.getElementById('username');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginMessage = document.getElementById('login-message');
+
+        // Initialize
+        totalWords.textContent = words.length;
 
         // Event listeners
-        startBtn.addEventListener('click', startTraining);
-        pauseBtn.addEventListener('click', togglePause);
-        userInput.addEventListener('keydown', checkAnswer);
+        document.addEventListener('DOMContentLoaded', function() {
+            loginBtn.addEventListener('click', handleLogin);
+            logoutBtn.addEventListener('click', handleLogout);
+            startBtn.addEventListener('click', startTraining);
+            pauseBtn.addEventListener('click', togglePause);
+            resetBtn.addEventListener('click', resetProgress);
+            userInput.addEventListener('keydown', checkAnswer);
+            
+           
+            const savedUsername = localStorage.getItem('currentUser');
+            if (savedUsername) {
+                usernameInput.value = savedUsername;
+                handleLogin();
+            }
+        });
 
-        function startTraining() {
-            isActive = true;
+        function handleLogin() {
+            username = usernameInput.value.trim();
+            if (username) {
+                localStorage.setItem('currentUser', username);
+                loadProgress();
+                usernameInput.disabled = true;
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+                startBtn.disabled = false;
+                resetBtn.disabled = false;
+                loginMessage.textContent = `Welcome, ${username}!`;
+                loginMessage.style.color = 'green';
+                germanWord.textContent = "Click Start to continue";
+                
+                // Initialize timers
+                updateTimers();
+            } else {
+                loginMessage.textContent = "Please enter your name";
+                loginMessage.style.color = 'red';
+            }
+        }
+
+        function handleLogout() {
+            saveProgress();
+            localStorage.removeItem('currentUser');
+            username = '';
+            usernameInput.value = '';
+            usernameInput.disabled = false;
+            loginBtn.style.display = 'inline-block';
+            logoutBtn.style.display = 'none';
+            startBtn.disabled = true;
+            pauseBtn.disabled = true;
+            resetBtn.disabled = true;
+            userInput.disabled = true;
+            loginMessage.textContent = "Logged out successfully";
+            loginMessage.style.color = 'green';
+            germanWord.textContent = "Please login to begin";
+            englishWord.textContent = "";
+            clearInterval(timerInterval);
+        }
+
+        function loadProgress() {
+            const savedProgress = localStorage.getItem(`germanTrainer_${username}`);
+            if (savedProgress) {
+                try {
+                    userProgress = JSON.parse(savedProgress);
+                    
+                    currentIndex = parseInt(userProgress.currentIndex) || 0;
+                    completed = parseInt(userProgress.completed) || 0;
+                    day = parseInt(userProgress.day) || 1;
+                    totalElapsed = parseInt(userProgress.totalElapsed) || 0;
+                    dailyElapsed = parseInt(userProgress.dailyElapsed) || 0;
+                    
+                    // Check for new day
+                    const lastUpdated = userProgress.lastUpdated ? new Date(userProgress.lastUpdated) : new Date();
+                    const now = new Date();
+                    if (now.toDateString() !== lastUpdated.toDateString()) {
+                        day++;
+                        dailyElapsed = 0;
+                    }
+                    
+                    updateCounters();
+                    currentPosition.textContent = currentIndex + 1;
+                    dayDisplay.textContent = day;
+                    progressBar.style.width = (completed / words.length * 100) + "%";
+                    
+                    germanWord.textContent = words[currentIndex].german;
+                    englishWord.textContent = words[currentIndex].english;
+                    
+                } catch (e) {
+                    console.error("Error loading progress:", e);
+                    resetProgress();
+                }
+            } else {
+                resetProgress();
+            }
+        }
+
+        function saveProgress() {
+            if (!username) return;
+            
+            userProgress = {
+                currentIndex: currentIndex,
+                completed: completed,
+                day: day,
+                totalElapsed: totalElapsed,
+                dailyElapsed: dailyElapsed,
+                lastUpdated: new Date().toISOString()
+            };
+            localStorage.setItem(`germanTrainer_${username}`, JSON.stringify(userProgress));
+        }
+
+        function resetProgress() {
             currentIndex = 0;
             completed = 0;
-            startTime = new Date().getTime();
-            pausedTime = 0;
-            updateCounter();
-            showNextWord();
+            day = 1;
+            totalElapsed = 0;
+            dailyElapsed = 0;
+            updateCounters();
+            currentPosition.textContent = currentIndex + 1;
+            dayDisplay.textContent = day;
+            progressBar.style.width = "0%";
+            feedback.textContent = '';
+            updateTimers();
+            saveProgress();
+            
+            germanWord.textContent = words[currentIndex].german;
+            englishWord.textContent = words[currentIndex].english;
+        }
+
+        function startTraining() {
+            if (!username) return;
+            
+            isActive = true;
+            startTime = new Date().getTime() - totalElapsed;
+            dailyStartTime = new Date().getTime() - dailyElapsed;
+            showCurrentWord();
             userInput.disabled = false;
             userInput.focus();
             startBtn.disabled = true;
             pauseBtn.disabled = false;
             
-            // Start timer
-            updateTimer();
-            timerInterval = setInterval(updateTimer, 1000);
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimers, 1000);
+        }
+
+        function showCurrentWord() {
+            germanWord.textContent = words[currentIndex].german;
+            englishWord.textContent = words[currentIndex].english;
+            userInput.value = '';
+            feedback.textContent = '';
+            currentPosition.textContent = currentIndex + 1;
         }
 
         function togglePause() {
@@ -1124,28 +1300,13 @@
             if (isPaused) {
                 pauseStart = new Date().getTime();
                 clearInterval(timerInterval);
+                saveProgress();
             } else {
-                pausedTime += new Date().getTime() - pauseStart;
-                updateTimer();
-                timerInterval = setInterval(updateTimer, 1000);
+                const pauseDuration = new Date().getTime() - pauseStart;
+                startTime += pauseDuration;
+                dailyStartTime += pauseDuration;
+                timerInterval = setInterval(updateTimers, 1000);
                 userInput.focus();
-            }
-        }
-
-        function showNextWord() {
-            if (currentIndex < words.length) {
-                germanWord.textContent = words[currentIndex].german;
-                englishWord.textContent = words[currentIndex].english;
-                userInput.value = '';
-                feedback.textContent = '';
-            } else {
-                germanWord.textContent = "Session complete!";
-                englishWord.textContent = "";
-                userInput.disabled = true;
-                isActive = false;
-                startBtn.disabled = false;
-                pauseBtn.disabled = true;
-                clearInterval(timerInterval);
             }
         }
 
@@ -1157,9 +1318,15 @@
                     feedback.className = "correct";
                     currentIndex++;
                     completed++;
-                    updateCounter();
+                    
+                    if (currentIndex >= words.length) {
+                        currentIndex = 0;
+                    }
+                    
+                    updateCounters();
                     updateProgress();
-                    setTimeout(showNextWord, 800);
+                    saveProgress();
+                    setTimeout(showCurrentWord, 800);
                 } else {
                     feedback.textContent = "Incorrect, try again";
                     feedback.className = "incorrect";
@@ -1168,45 +1335,39 @@
             }
         }
 
-        function updateCounter() {
+        function updateCounters() {
             counter.textContent = completed;
         }
 
         function updateProgress() {
-            const progress = (completed / 1000) * 100;
+            const progress = (completed / words.length) * 100;
             progressBar.style.width = progress + "%";
         }
 
-        function updateTimer() {
-            if (!isActive || isPaused) return;
-            
+        function updateTimers() {
             const now = new Date().getTime();
-            const elapsed = now - startTime - pausedTime;
-            const remaining = 24 * 60 * 60 * 1000 - elapsed;
             
-            if (remaining <= 0) {
-                clearInterval(timerInterval);
-                timerDisplay.textContent = "Time's up!";
-                germanWord.textContent = "Time's up for today!";
-                englishWord.textContent = "";
-                userInput.disabled = true;
-                isActive = false;
-                return;
+            if (isActive && !isPaused) {
+                totalElapsed = now - startTime;
+                dailyElapsed = now - dailyStartTime;
             }
             
-            const hours = Math.floor(remaining / (1000 * 60 * 60));
-            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
             
-            timerDisplay.textContent = 
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} remaining`;
+            // Daily timer
+            const dailyRemaining = Math.max(0, 24 * 60 * 60 * 1000 - dailyElapsed);
+            const dailyHours = Math.floor(dailyRemaining / (1000 * 60 * 60));
+            const dailyMinutes = Math.floor((dailyRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const dailySeconds = Math.floor((dailyRemaining % (1000 * 60)) / 1000);
+            dailyTimer.textContent = 
+                `${dailyHours.toString().padStart(2, '0')}:${dailyMinutes.toString().padStart(2, '0')}:${dailySeconds.toString().padStart(2, '0')}`;
             
-            // Check if falling behind
-            const expectedWords = Math.floor(elapsed / (24 * 60 * 60 * 1000) * 1000);
-            if (completed < expectedWords * 0.8) {
-                timerDisplay.style.color = "red";
-            } else {
-                timerDisplay.style.color = "#333";
+        
+            if (dailyRemaining <= 0) {
+                day++;
+                dayDisplay.textContent = day;
+                dailyElapsed = 0;
+                dailyStartTime = now;
+                saveProgress();
             }
         }
     </script>
